@@ -1,27 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
+import type { Product } from "@/lib/types";
+import { formatEUR } from "@/lib/format";
+import { useDebounce } from "@/lib/hooks";
+import { StockBadge } from "@/components/StockBadge";
 
-type Product = {
-  id: number;
-  barcode: string;
-  name: string;
-  priceCents: number;
-  stock: number;
-  updatedAt: string;
-};
-
-// ── Debounce hook ──────────────────────────────────────────────
-function useDebounce<T>(value: T, delay: number): T {
-  const [debounced, setDebounced] = useState(value);
-  useEffect(() => {
-    const t = setTimeout(() => setDebounced(value), delay);
-    return () => clearTimeout(t);
-  }, [value, delay]);
-  return debounced;
-}
-
-// ── Highlight matching text ────────────────────────────────────
 function Highlight({ text, query }: { text: string; query: string }) {
   if (!query.trim()) return <>{text}</>;
   const parts = text.split(new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi"));
@@ -40,32 +24,7 @@ function Highlight({ text, query }: { text: string; query: string }) {
   );
 }
 
-// ── Stock badge ────────────────────────────────────────────────
-function StockBadge({ stock }: { stock: number }) {
-  if (stock === 0)
-    return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-red-50 border border-red-200 px-2.5 py-0.5 text-xs font-medium text-red-600">
-        <span className="w-1.5 h-1.5 rounded-full bg-red-400 inline-block" />
-        Out of stock
-      </span>
-    );
-  if (stock <= 5)
-    return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 border border-amber-200 px-2.5 py-0.5 text-xs font-medium text-amber-700">
-        <span className="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block" />
-        Low — {stock} left
-      </span>
-    );
-  return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 text-xs font-medium text-emerald-700">
-      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
-      In stock · {stock}
-    </span>
-  );
-}
-
-// ── Main Page ──────────────────────────────────────────────────
-export default function HomePage() {
+export default function SearchPage() {
   const [query, setQuery] = useState("");
   const [inputValue, setInputValue] = useState("");
   const [suggestions, setSuggestions] = useState<Product[]>([]);
@@ -80,7 +39,6 @@ export default function HomePage() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const debouncedInput = useDebounce(inputValue, 180);
 
-  // ── Fetch suggestions (fast, lightweight) ───────────────────
   useEffect(() => {
     const q = debouncedInput.trim();
     if (q.length < 1) {
@@ -103,7 +61,6 @@ export default function HomePage() {
       .catch(() => setSuggestions([]));
   }, [debouncedInput]);
 
-  // ── Full search (on commit) ──────────────────────────────────
   const runSearch = useCallback(async (q: string) => {
     const trimmed = q.trim();
     if (!trimmed) return;
@@ -124,7 +81,6 @@ export default function HomePage() {
     }
   }, []);
 
-  // ── Keyboard navigation ──────────────────────────────────────
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (!suggestionsOpen) {
       if (e.key === "Enter") runSearch(inputValue);
@@ -160,7 +116,6 @@ export default function HomePage() {
     inputRef.current?.focus();
   };
 
-  // ── Close dropdown on outside click ─────────────────────────
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (
@@ -172,7 +127,6 @@ export default function HomePage() {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  // ── Clear ────────────────────────────────────────────────────
   const clearSearch = () => {
     setInputValue("");
     setQuery("");
@@ -195,16 +149,11 @@ export default function HomePage() {
     : `${results.length} product${results.length !== 1 ? "s" : ""} found`;
 
   return (
-    <main className="min-h-screen bg-[#f7f6f3] font-sans antialiased text-neutral-900">
-      {/* Header */}
+    <main className="min-h-screen bg-surface font-sans antialiased text-neutral-900">
       <header className="border-b border-neutral-200 bg-white/80 backdrop-blur-sm sticky top-0 z-20">
         <div className="mx-auto max-w-3xl px-4 sm:px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <img
-  		src="/logomasjid.png"
-  		alt="Shop logo"
-  		className="h-8 w-auto object-contain"
-		/>
+            <img src="/logomasjid.png" alt="Shop logo" className="h-8 w-auto object-contain" />
             <span className="font-bold text-sm tracking-tight text-neutral-800">Masjid Indonesia Frankfurt</span>
           </div>
           <span className="text-xs text-neutral-400 font-mono">v1.0</span>
@@ -212,15 +161,12 @@ export default function HomePage() {
       </header>
 
       <div className="mx-auto max-w-3xl px-4 sm:px-6 py-10">
-
-        {/* Hero search card */}
         <div className="mb-8">
           <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-neutral-900 mb-1">
             Find any product <span className="text-neutral-400 font-light">instantly</span>
           </h1>
           <p className="text-sm text-neutral-500 mb-6">Search by name, keyword, or barcode number</p>
 
-          {/* Search box + dropdown */}
           <div className="relative">
             <div
               className={`flex items-center gap-2 bg-white border-2 transition-all duration-150 shadow-sm px-4 py-3
@@ -229,7 +175,6 @@ export default function HomePage() {
                   : "border-neutral-200 rounded-2xl hover:border-neutral-300 focus-within:border-neutral-800 focus-within:shadow-md"
                 }`}
             >
-              {/* Search icon */}
               <svg className="w-5 h-5 text-neutral-400 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <circle cx="11" cy="11" r="7" />
                 <path d="m20 20-3.5-3.5" />
@@ -248,7 +193,6 @@ export default function HomePage() {
                 className="flex-1 bg-transparent text-base text-neutral-900 placeholder:text-neutral-400 outline-none min-w-0"
               />
 
-              {/* Loading spinner */}
               {loading && (
                 <svg className="w-4 h-4 text-neutral-400 animate-spin shrink-0" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
@@ -256,7 +200,6 @@ export default function HomePage() {
                 </svg>
               )}
 
-              {/* Clear button */}
               {inputValue && !loading && (
                 <button
                   onClick={clearSearch}
@@ -269,7 +212,6 @@ export default function HomePage() {
                 </button>
               )}
 
-              {/* Search button */}
               <button
                 onClick={() => runSearch(inputValue)}
                 className="shrink-0 bg-neutral-900 hover:bg-neutral-700 active:scale-95 text-white text-sm font-semibold px-4 py-1.5 rounded-xl transition-all"
@@ -278,7 +220,6 @@ export default function HomePage() {
               </button>
             </div>
 
-            {/* ── Suggestions Dropdown ── */}
             {suggestionsOpen && suggestions.length > 0 && (
               <div
                 ref={dropdownRef}
@@ -307,7 +248,7 @@ export default function HomePage() {
                         )}
                       </div>
                       <span className="text-sm font-bold text-neutral-900 shrink-0 font-mono">
-                        €{(product.priceCents / 100).toFixed(2)}
+                        €{formatEUR(product.priceCents)}
                       </span>
                     </li>
                   ))}
@@ -325,13 +266,11 @@ export default function HomePage() {
             )}
           </div>
 
-          {/* Status text */}
           <p className={`mt-3 text-sm transition-colors ${error ? "text-red-500" : "text-neutral-500"}`}>
             {statusText}
           </p>
         </div>
 
-        {/* ── Results ── */}
         <div className="space-y-3">
           {results.map((product, idx) => (
             <article
@@ -344,25 +283,20 @@ export default function HomePage() {
                   <h2 className="text-base font-bold text-neutral-900 leading-snug">
                     <Highlight text={product.name} query={query} />
                   </h2>
-
                   <div className="mt-1.5 flex flex-wrap items-center gap-2">
                     <StockBadge stock={product.stock} />
-                    <span className="text-xs text-neutral-400 font-mono">
-                      {product.barcode}
-                    </span>
+                    <span className="text-xs text-neutral-400 font-mono">{product.barcode}</span>
                   </div>
-
                   {product.updatedAt && (
                     <p className="mt-2 text-xs text-neutral-400">
                       Updated {new Date(product.updatedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
                     </p>
                   )}
                 </div>
-
                 <div className="shrink-0 text-right">
                   <div className="text-[11px] uppercase tracking-widest text-neutral-400 font-medium mb-0.5">Price</div>
                   <div className="text-3xl font-extrabold tracking-tight text-neutral-900 leading-none">
-                    €{(product.priceCents / 100).toFixed(2)}
+                    €{formatEUR(product.priceCents)}
                   </div>
                   {product.stock === 0 && (
                     <div className="text-xs text-red-400 mt-1">Unavailable</div>
@@ -372,7 +306,6 @@ export default function HomePage() {
             </article>
           ))}
 
-          {/* Empty state */}
           {searched && !loading && !error && results.length === 0 && (
             <div className="text-center py-16">
               <div className="text-4xl mb-3">🔍</div>

@@ -19,7 +19,7 @@ function validateProduct(data: {
     return "Price must be a valid positive number.";
   }
 
-  if (!Number.isInteger(data.stock) || data.stock < 0) {
+  if (typeof data.stock !== "number" || !Number.isInteger(data.stock) || data.stock < 0) {
     return "Stock must be a valid non-negative integer.";
   }
 
