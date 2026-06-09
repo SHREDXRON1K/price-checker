@@ -1,16 +1,17 @@
 # Project: Price Checker
+A community price checker app for a mosque shop (IMG e.V. Frankfurt).
 
 ## Stack
 - Next.js (TypeScript)
 - Prisma ORM
 - SQLite (dev.db)
-- Tailwind CSS (postcss config present)
+- Tailwind CSS
 - ESLint
 
 ## Folder Structure
 - `app/` - Next.js app router (pages, layouts, components)
 - `prisma/` - schema and migrations
-- `public/` - static assets
+- `public/` - static assets (logo: public/logomasjid.png)
 - `dev.db` - local SQLite database
 
 ## Conventions
@@ -31,43 +32,77 @@
 - `node_modules/`
 - `package-lock.json`
 
-## UI & Design Rules
+## Next.js Version Warning
+This may have breaking changes from standard Next.js conventions.
+Before writing any Next.js code, check `node_modules/next/dist/docs/` for the actual API.
+Heed all deprecation notices — do not assume standard patterns apply.
 
-### Anti-AI-Look Checklist
-- NO generic blue primary buttons (`#3B82F6`, `#2563EB`)
-- NO card-heavy layouts with identical rounded corners everywhere
-- NO gradient hero sections with big bold stat + small label
-- NO numbered section markers (01 / 02 / 03) unless content is truly sequential
-- NO Tailwind default spacing without intentional type scale
-- NO Inter + gray palette as default — pick something with personality
+## UI Design Reference
+Design style based on: https://masjidindonesia.de
+This is a simple, clean community website for an Indonesian mosque in Frankfurt.
 
-### Typography
-- Display font: pick ONE characterful font used sparingly (headings only)
-- Body font: clean, readable, complementary to display
-- Set a real type scale — don't let Tailwind defaults decide
+### Vibe
+- Light, welcoming, community-focused — NOT a SaaS dashboard
+- Feels like a simple shop, not a tech product
+- Clean and readable for all ages
 
-### Color
-- Define a palette of 4–6 named hex values in globals.css or tailwind.config
-- One accent color max, used with restraint
-- Background should NOT be pure white (#fff) or generic dark (#111)
+### Design Tokens (source of truth: app/globals.css)
+- `--bg-base: #fafafa` — page background
+- `--bg-surface: #ffffff` — cards, panels
+- `--accent: #2d6a4f` — earthy mosque green, used sparingly
+- `--accent-light: #52b788` — hover states
+- `--text-primary: #1a1a1a` — main text
+- `--text-muted: #6b7280` — secondary text
+- `--border: #e0e0e0` — card borders
+- `--font-display: Georgia, serif` — headings only
+- `--font-body: Inter, sans-serif` — all body text
+- `--radius-md: 6px` — cards and inputs
 
-### Layout
-- Structure must encode meaning — if something is in a grid, there's a reason
-- Avoid equal-weight cards for everything — use hierarchy
-- Spacing should be intentional, not Tailwind's p-4 everywhere
+### Layout Rules
+- ALL products visible in a grid by default on page load
+- Search/filter narrows the grid, never hides it completely
+- Grid: auto-fill, minmax(200px, 1fr)
+- Each product card shows: name, price (green), stock badge
 
-### Motion
-- One orchestrated animation beats scattered effects
-- No animation on every element — pick where it actually adds value
-- Respect `prefers-reduced-motion`
+### Component Classes (use from globals.css)
+- `.product-grid` — product grid container
+- `.product-card` — individual product card
+- `.price` — price display (green, large)
+- `.stock-in` / `.stock-low` / `.stock-out` — stock badges
+- `.search-bar` — search input
 
-### Copy / Text
-- Write from the user's side — what they control, not how the system works
-- Active voice: "Save changes" not "Submit"
-- No filler words, no "Welcome to..." hero text
+### Header
+- Logo: use `public/logomasjid.png` — always visible top left
+- Same header style as masjidindonesia.de — logo left, nav links right
+- Clean white header, green accent on active links
 
-### When building UI, always ask:
-- Does this look like it could be ANY website? → Redesign
-- Is the font choice intentional for a price-checking tool? → Justify it
-- Is there one signature element that makes this memorable? → Add it
+### Hard Rules
+- NO dark backgrounds
+- NO blue buttons — use `--accent` green only
+- NO gradients
+- NO heavy shadows
+- NO animations except subtle hover border color change
+- NO bubbly border-radius above 10px
+- NO generic Tailwind defaults — always use CSS variables from globals.css
+- Always respect `prefers-reduced-motion`
 
+## Search Page — Product Grid (search/page.tsx)
+
+### Default State (no search)
+- ALL products loaded on page mount via GET /api/search?q=&limit=100
+- Displayed immediately in a grid — no empty state, no "search to see products"
+- Grid: CSS grid, auto-fill, minmax(200px, 1fr), gap 1rem
+
+### Search State
+- As user types, grid filters to matching products
+- Grid never disappears — always visible
+- If no matches: keep grid container, show "no products matched" text inside
+
+### Each Product Card (.product-card)
+- Name: bold, Georgia serif, #1a1a1a
+- Price: #2d6a4f, 1.25rem, bold
+- Stock badge: pill shape, color based on stock level
+  - in stock → bg #d1fae5, text #2d6a4f
+  - low (≤5) → bg #fef3c7, text #d97706  
+  - out of stock → bg #fee2e2, text #ef4444
+- Hover: border color #52b788, no other effect

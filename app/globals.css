@@ -1,31 +1,140 @@
 @import "tailwindcss";
 
+/* ── Design Tokens ─────────────────────────────────────── */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Backgrounds */
+  --bg-base:       #fafafa;
+  --bg-surface:    #ffffff;
+  --bg-elevated:   #f0f0f0;
+
+  /* Accent — earthy mosque green */
+  --accent:        #2d6a4f;
+  --accent-light:  #52b788;
+  --accent-dim:    #2d6a4f22;
+
+  /* Text */
+  --text-primary:  #1a1a1a;
+  --text-muted:    #6b7280;
+  --text-faint:    #9ca3af;
+
+  /* Semantic — price specific */
+  --price-color:   #2d6a4f;
+  --stock-in:      #2d6a4f;
+  --stock-low:     #d97706;
+  --stock-out:     #ef4444;
+
+  /* Border */
+  --border:        #e0e0e0;
+  --border-accent: #2d6a4f44;
+
+  /* Typography */
+  --font-display:  'Georgia', serif;
+  --font-body:     'Inter', sans-serif;
+
+  /* Radius — clean, not bubbly */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+
+  /* Transitions */
+  --transition: 150ms ease;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-ink: #1a1a18;
-  --color-paper: #f4f3f0;
-  --color-surface: #f7f6f3;
-  --color-border: #e5e3de;
-  --color-muted: #888888;
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-background: var(--bg-base);
+  --color-foreground: var(--text-primary);
+  --font-sans: var(--font-body);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ── Base ──────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  line-height: 1.6;
+}
+
+/* ── Search Page Grid ──────────────────────────────────── */
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+  padding: 1rem 0;
+  width: 100%;
+}
+
+.product-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  transition: border-color var(--transition);
+  cursor: default;
+}
+
+.product-card:hover {
+  border-color: var(--accent-light);
+}
+
+.product-card .name {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.product-card .price {
+  color: var(--accent);
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.stock-badge {
+  display: inline-block;
+  font-size: 0.72rem;
+  padding: 2px 8px;
+  border-radius: 99px;
+  font-family: var(--font-body);
+}
+
+.stock-in  { background: #d1fae5; color: #2d6a4f; }
+.stock-low { background: #fef3c7; color: #d97706; }
+.stock-out { background: #fee2e2; color: #ef4444; }
+
+/* ── Search Bar ────────────────────────────────────────── */
+.search-bar {
+  width: 100%;
+  max-width: 480px;
+  padding: 0.6rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color var(--transition);
+}
+
+.search-bar:focus {
+  border-color: var(--accent);
+}
+
+/* ── Reduced motion ────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition-duration: 0.01ms !important;
+  }
 }
