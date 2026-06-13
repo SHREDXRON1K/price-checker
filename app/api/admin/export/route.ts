@@ -17,7 +17,7 @@ export async function GET() {
 
     const header = ["barcode", "name", "price", "stock"];
     const rows = products.map((product) => [
-      escapeCSV(product.barcode),
+      escapeCSV(product.barcode ?? ""),
       escapeCSV(product.name),
       escapeCSV((product.priceCents / 100).toFixed(2)),
       escapeCSV(product.stock),

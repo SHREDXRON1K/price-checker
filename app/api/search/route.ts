@@ -17,7 +17,15 @@ export async function GET(req: NextRequest) {
     const q = (searchParams.get("q") || "").trim();
     const limitParam = Math.min(parseInt(searchParams.get("limit") || "20"), 100);
 
-    if (!q) return NextResponse.json([]);
+    if (!q) {
+      const products = await prisma.$queryRaw<SearchRow[]>(Prisma.sql`
+        SELECT id, barcode, name, "priceCents", stock, "updatedAt"
+        FROM "Product"
+        ORDER BY name ASC
+        LIMIT ${Prisma.raw(String(limitParam))}
+      `);
+      return NextResponse.json(products);
+    }
 
     const tokens = q
       .split(/\s+/)
@@ -28,15 +36,15 @@ export async function GET(req: NextRequest) {
     if (tokens.length === 0) return NextResponse.json([]);
 
     const allAND = tokens
-      .map((t) => Prisma.sql`name LIKE ${`%${t}%`} COLLATE NOCASE`)
+      .map((t) => Prisma.sql`name ILIKE ${`%${t}%`}`)
       .reduce((acc, cur) => Prisma.sql`${acc} AND ${cur}`);
 
     const anyOR = tokens
-      .map((t) => Prisma.sql`name LIKE ${`%${t}%`} COLLATE NOCASE`)
+      .map((t) => Prisma.sql`name ILIKE ${`%${t}%`}`)
       .reduce((acc, cur) => Prisma.sql`${acc} OR ${cur}`);
 
     const startsOR = tokens
-      .map((t) => Prisma.sql`name LIKE ${`${t}%`} COLLATE NOCASE`)
+      .map((t) => Prisma.sql`name ILIKE ${`${t}%`}`)
       .reduce((acc, cur) => Prisma.sql`${acc} OR ${cur}`);
 
     const products = await prisma.$queryRaw<SearchRow[]>(Prisma.sql`
@@ -44,26 +52,26 @@ export async function GET(req: NextRequest) {
         id,
         barcode,
         name,
-        priceCents,
+        "priceCents",
         stock,
-        updatedAt
-      FROM Product
+        "updatedAt"
+      FROM "Product"
       WHERE
-        barcode LIKE ${`%${q}%`} COLLATE NOCASE
+        barcode ILIKE ${`%${q}%`}
         OR (${allAND})
         OR (${anyOR})
       ORDER BY
         CASE
-          WHEN barcode = ${q} COLLATE NOCASE             THEN 0
-          WHEN name    = ${q} COLLATE NOCASE             THEN 1
-          WHEN name LIKE ${`${q}%`} COLLATE NOCASE       THEN 2
-          WHEN (${startsOR})                             THEN 3
-          WHEN (${allAND})                               THEN 4
-          WHEN barcode LIKE ${`%${q}%`} COLLATE NOCASE   THEN 5
-          ELSE                                               6
+          WHEN barcode ILIKE ${q}           THEN 0
+          WHEN name    ILIKE ${q}           THEN 1
+          WHEN name    ILIKE ${`${q}%`}     THEN 2
+          WHEN (${startsOR})                THEN 3
+          WHEN (${allAND})                  THEN 4
+          WHEN barcode ILIKE ${`%${q}%`}    THEN 5
+          ELSE                                  6
         END,
         LENGTH(name) ASC,
-        updatedAt DESC
+        "updatedAt" DESC
       LIMIT ${Prisma.raw(String(limitParam))}
     `);
 
