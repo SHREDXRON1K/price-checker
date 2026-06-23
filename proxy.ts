@@ -1,10 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 
+const NO_CACHE_HEADERS = {
+  "Cache-Control": "no-store, no-cache, must-revalidate",
+  "Pragma": "no-cache",
+};
+
 function unauthorized(realm: string): NextResponse {
   return new NextResponse("Unauthorized", {
     status: 401,
-    headers: { "WWW-Authenticate": `Basic realm="${realm}"` },
+    headers: { "WWW-Authenticate": `Basic realm="${realm}"`, ...NO_CACHE_HEADERS },
   });
+}
+
+function withNoCacheHeaders(response: NextResponse): NextResponse {
+  Object.entries(NO_CACHE_HEADERS).forEach(([k, v]) => response.headers.set(k, v));
+  return response;
 }
 
 function checkCredentials(
@@ -36,7 +46,7 @@ export function proxy(request: NextRequest) {
         process.env.ADMIN_USER ?? "",
         process.env.ADMIN_PASSWORD ?? "",
         "Admin"
-      ) ?? NextResponse.next()
+      ) ?? withNoCacheHeaders(NextResponse.next())
     );
   }
 
@@ -47,7 +57,7 @@ export function proxy(request: NextRequest) {
         process.env.SEARCH_USER ?? "",
         process.env.SEARCH_PASSWORD ?? "",
         "Shop"
-      ) ?? NextResponse.next()
+      ) ?? withNoCacheHeaders(NextResponse.next())
     );
   }
 
