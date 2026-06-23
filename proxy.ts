@@ -1,43 +1,59 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export function proxy(req: NextRequest) {
+function unauthorized(realm: string): NextResponse {
+  return new NextResponse("Unauthorized", {
+    status: 401,
+    headers: { "WWW-Authenticate": `Basic realm="${realm}"` },
+  });
+}
 
-  const url = req.nextUrl.pathname;
+function checkCredentials(
+  request: NextRequest,
+  expectedUser: string,
+  expectedPassword: string,
+  realm: string
+): NextResponse | null {
+  const authHeader = request.headers.get("authorization");
+  if (!authHeader?.startsWith("Basic ")) return unauthorized(realm);
 
-  // Only protect admin routes
-  if (!url.startsWith("/admin") && !url.startsWith("/api/admin")) {
-    return NextResponse.next();
+  const [user, password] = Buffer.from(authHeader.slice(6), "base64")
+    .toString()
+    .split(":");
+
+  if (user !== expectedUser || password !== expectedPassword)
+    return unauthorized(realm);
+
+  return null;
+}
+
+export function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  if (pathname.startsWith("/admin") || pathname.startsWith("/api/admin")) {
+    return (
+      checkCredentials(
+        request,
+        process.env.ADMIN_USER ?? "",
+        process.env.ADMIN_PASSWORD ?? "",
+        "Admin"
+      ) ?? NextResponse.next()
+    );
   }
 
-  const authHeader = req.headers.get("authorization");
-
-  if (!authHeader) {
-    return new Response("Auth required", {
-      status: 401,
-      headers: {
-        "WWW-Authenticate": 'Basic realm="Admin Area"',
-      },
-    });
-  }
-
-  const encoded = authHeader.split(" ")[1];
-  const decoded = Buffer.from(encoded, "base64").toString();
-
-  const [, password] = decoded.split(":");
-
-  if (password !== process.env.ADMIN_PASSWORD) {
-    return new Response("Unauthorized", {
-      status: 401,
-      headers: {
-        "WWW-Authenticate": 'Basic realm="Admin Area"',
-      },
-    });
+  if (pathname.startsWith("/search") || pathname.startsWith("/api/search")) {
+    return (
+      checkCredentials(
+        request,
+        process.env.SEARCH_USER ?? "",
+        process.env.SEARCH_PASSWORD ?? "",
+        "Shop"
+      ) ?? NextResponse.next()
+    );
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/api/admin/:path*"],
+  matcher: ["/admin/:path*", "/api/admin/:path*", "/search/:path*", "/api/search/:path*"],
 };
