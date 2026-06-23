@@ -51,14 +51,12 @@ export function proxy(request: NextRequest) {
   }
 
   if (pathname.startsWith("/search") || pathname.startsWith("/api/search")) {
-    return (
-      checkCredentials(
-        request,
-        process.env.SEARCH_USER ?? "",
-        process.env.SEARCH_PASSWORD ?? "",
-        "Shop"
-      ) ?? withNoCacheHeaders(NextResponse.next())
-    );
+    const authHeader = request.headers.get("authorization");
+    if (!authHeader?.startsWith("Basic ")) return unauthorized("Shop");
+    const colonIdx = Buffer.from(authHeader.slice(6), "base64").toString().indexOf(":");
+    const password = Buffer.from(authHeader.slice(6), "base64").toString().slice(colonIdx + 1);
+    if (password !== (process.env.SEARCH_PASSWORD ?? "")) return unauthorized("Shop");
+    return withNoCacheHeaders(NextResponse.next());
   }
 
   return NextResponse.next();

@@ -10,6 +10,7 @@ const inter = Inter({ variable: "--font-inter", subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "Price Checker — Masjid Indonesia Frankfurt",
   description: "Look up product prices and stock for the Masjid Indonesia Frankfurt shop.",
+  robots: { index: false, follow: false, googleBot: { index: false } },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
